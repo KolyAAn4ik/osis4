@@ -29,3 +29,22 @@ jobs:
         run: |
           docker stop laba4-test
           docker rm laba4-test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: success()
+
+    steps:
+      - name: Deploy via SSH to localhost
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
+            git pull
+            docker compose -f docker/docker-compose.yml up -d --build
+            docker system prune -f
